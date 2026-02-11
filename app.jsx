@@ -1,5 +1,5 @@
 const { useState, useEffect } = React;
-const { Plus, Settings, X, Trash2, ChevronLeft, ChevronRight, Calendar } = window.lucide;
+const { Plus, Settings, X, Trash2, ChevronLeft, ChevronRight, Calendar } = LucideReact;
 
 function CalorieTracker() {
   const [currentDate, setCurrentDate] = useState(new Date());
