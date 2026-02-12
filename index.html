@@ -1,60 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#1F2937">
-  <meta name="description" content="Simple and beautiful calorie and protein tracker">
-  
-  <!-- PWA Configuration -->
-  <link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="/icon-192.png">
-  
-  <title>Calorie Tracker</title>
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
-    }
-    
-    /* Prevent pull-to-refresh on mobile */
-    body {
-      overscroll-behavior-y: contain;
-    }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-
-  <!-- React, ReactDOM, and Babel -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  
-  <!-- Lucide React Icons -->
-  <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
-
-  <!-- Your App Component -->
-  <script type="text/babel" src="/app.js"></script>
-
-  <!-- Service Worker Registration -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(registration => {
-            console.log('SW registered:', registration);
-          })
-          .catch(error => {
-            console.log('SW registration failed:', error);
-          });
-      });
-    }
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1F2937" />
+    <meta name="description" content="Simple and beautiful calorie and protein tracker" />
+    <title>Calorie Tracker</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
