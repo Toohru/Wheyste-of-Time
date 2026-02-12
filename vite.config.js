@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'Calorie Tracker',
-        short_name: 'Calories',
-        description: 'Track your daily calories and protein intake',
+        name: 'Wheyste of Time',
+        short_name: 'Wheyste',
+        description: 'Track your calories and protein with style',
         theme_color: '#1F2937',
         background_color: '#1F2937',
         display: 'standalone',

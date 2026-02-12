@@ -367,12 +367,10 @@ export default function CalorieTracker() {
         {/* Add Entry Modal */}
         {showAddModal && (
           <div 
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            className="animate-fadeIn"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn"
           >
             <div 
-              className="bg-gray-800 rounded-3xl p-6 w-full max-w-md shadow-2xl border border-gray-700"
-              className="animate-scaleIn"
+              className="bg-gray-800 rounded-3xl p-6 w-full max-w-md shadow-2xl border border-gray-700 animate-scaleIn"
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
@@ -435,12 +433,10 @@ export default function CalorieTracker() {
         {/* Settings Modal */}
         {showSettings && (
           <div 
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            className="animate-fadeIn"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn"
           >
             <div 
-              className="bg-gray-800 rounded-3xl p-6 w-full max-w-md shadow-2xl border border-gray-700"
-              className="animate-scaleIn"
+              className="bg-gray-800 rounded-3xl p-6 w-full max-w-md shadow-2xl border border-gray-700 animate-scaleIn"
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
@@ -493,12 +489,10 @@ export default function CalorieTracker() {
         {/* Weekly View Modal */}
         {showWeekly && (
           <div 
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto"
-            className="animate-fadeIn"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto animate-fadeIn"
           >
             <div 
-              className="bg-gray-800 rounded-3xl p-6 w-full max-w-md my-8 shadow-2xl border border-gray-700"
-              className="animate-scaleIn"
+              className="bg-gray-800 rounded-3xl p-6 w-full max-w-md my-8 shadow-2xl border border-gray-700 animate-scaleIn"
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">

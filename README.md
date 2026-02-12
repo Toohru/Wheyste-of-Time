@@ -1,4 +1,4 @@
-# 🍽️ Calorie Tracker - Proper React Build
+# 🍽️ Wheyste of Time - Calorie Tracker
 
 ## 📦 What's Different Now
 
@@ -75,7 +75,7 @@ Open http://localhost:5173 in your browser!
 ## 📁 Project Structure
 
 ```
-calorie-tracker/
+wheyste-of-time/
 ├── public/
 │   ├── icon-192.png      (you create this)
 │   └── icon-512.png      (you create this)
