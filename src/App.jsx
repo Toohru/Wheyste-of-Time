@@ -230,7 +230,7 @@ export default function CalorieTracker() {
     return Math.round(calories);
   };
 
-  const getEnergyLabel = () => displayUnit === 'kj' ? 'kJ' : 'cal';
+  const getEnergyLabel = () => displayUnit === 'kj' ? 'kJ' : 'kcal';
 
   // Filter previous meals based on search
   const filteredPreviousMeals = previousMeals.filter(meal =>
@@ -519,15 +519,15 @@ export default function CalorieTracker() {
 
               {/* Previous Meals Search */}
               {previousMeals.length > 0 && (
-                <div className="mb-6">
+                <div className="mb-6 pb-6 border-b-2 border-gray-600/30">
                   <label className={`block text-sm font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    SEARCH PREVIOUS MEALS
+                    QUICK ADD FROM HISTORY
                   </label>
                   <div className="relative">
                     <Search size={18} className={`absolute left-3 top-3.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                     <input
                       type="text"
-                      placeholder="Search meals..."
+                      placeholder="Search previous meals..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className={`w-full pl-10 p-3 ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} border-2 rounded-xl focus:border-blue-500 focus:outline-none transition-all duration-200`}
@@ -544,7 +544,7 @@ export default function CalorieTracker() {
                         >
                           <p className={`font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{meal.name}</p>
                           <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            {meal.calories} cal • {meal.protein}g protein
+                            {meal.calories} kcal • {meal.protein}g protein
                           </p>
                         </button>
                       ))}
@@ -552,6 +552,10 @@ export default function CalorieTracker() {
                   )}
                 </div>
               )}
+
+              <h3 className={`text-sm font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-4 tracking-wide`}>
+                ADD NEW MEAL
+              </h3>
 
               <div className="space-y-4">
                 <div>
@@ -581,7 +585,7 @@ export default function CalorieTracker() {
                             : darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
                       >
-                        cal
+                        kcal
                       </button>
                       <button
                         onClick={() => setNewEntry({ ...newEntry, energyUnit: 'kj' })}
@@ -713,7 +717,7 @@ export default function CalorieTracker() {
                           : darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
                     >
-                      Calories (cal)
+                      Kilocalories (kcal)
                     </button>
                     <button
                       onClick={() => setTempDisplayUnit('kj')}
@@ -764,15 +768,16 @@ export default function CalorieTracker() {
           </div>
         )}
 
-        {/* Weekly View Modal - keeping existing code but updating colors */}
+        {/* Weekly View Modal */}
         {showWeekly && (
           <div 
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto animate-fadeIn"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn"
           >
             <div 
-              className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-3xl p-6 w-full max-w-md my-8 shadow-2xl border animate-scaleIn`}
+              className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-3xl w-full max-w-md my-8 shadow-2xl border animate-scaleIn max-h-[90vh] flex flex-col`}
             >
-              <div className="flex justify-between items-center mb-6">
+              {/* Sticky Header */}
+              <div className={`flex justify-between items-center p-6 pb-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-t-3xl sticky top-0 z-10`}>
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                   Last 7 Days
                 </h2>
@@ -783,6 +788,9 @@ export default function CalorieTracker() {
                   <X size={24} className={darkMode ? 'text-gray-300' : 'text-gray-700'} />
                 </button>
               </div>
+
+              {/* Scrollable Content */}
+              <div className="overflow-y-auto px-6 pb-6">
 
               {/* Weekly Totals */}
               <div className={`${darkMode ? 'bg-gray-700/40 border-gray-600/50' : 'bg-blue-50 border-blue-100'} rounded-2xl p-5 mb-6 shadow-md border`}>
@@ -861,6 +869,7 @@ export default function CalorieTracker() {
                     </div>
                   </div>
                 ))}
+              </div>
               </div>
             </div>
           </div>
