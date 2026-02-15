@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Settings, X, Trash2, ChevronLeft, ChevronRight, Calendar, Sun, Moon, Search } from 'lucide-react';
+import { Plus, Settings, X, Trash2, ChevronLeft, ChevronRight, Calendar, Sun, Moon, Search, Edit2 } from 'lucide-react';
 
 export default function CalorieTracker() {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // Always initialize to today's date (normalized to midnight)
+  const getTodayDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  };
+  
+  const [currentDate, setCurrentDate] = useState(getTodayDate());
   const [allEntries, setAllEntries] = useState({});
   const [goals, setGoals] = useState({ calories: 2000, protein: 150 });
   const [showAddModal, setShowAddModal] = useState(false);
@@ -16,6 +23,8 @@ export default function CalorieTracker() {
   const [tempDisplayUnit, setTempDisplayUnit] = useState('cal');
   const [previousMeals, setPreviousMeals] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const dateKey = (date) => {
     return date.toISOString().split('T')[0];
@@ -173,15 +182,86 @@ export default function CalorieTracker() {
     setShowAddModal(false);
   };
 
-  const handleDeleteEntry = (id) => {
+  const handleDeleteEntry = (entry) => {
+    setDeleteConfirm(entry);
+  };
+
+  const confirmDeleteEntry = () => {
+    if (!deleteConfirm) return;
+    
     const key = dateKey(currentDate);
-    const updatedEntries = currentEntries.filter(entry => entry.id !== id);
+    const updatedEntries = currentEntries.filter(entry => entry.id !== deleteConfirm.id);
     const updatedAllEntries = {
       ...allEntries,
       [key]: updatedEntries,
     };
     setAllEntries(updatedAllEntries);
     saveAllEntries(updatedAllEntries);
+    setDeleteConfirm(null);
+  };
+
+  const handleEditEntry = (entry) => {
+    setEditingEntry(entry);
+    setNewEntry({
+      name: entry.name,
+      energy: entry.calories.toString(),
+      energyUnit: 'cal',
+      protein: entry.protein.toString(),
+    });
+    setShowAddModal(true);
+  };
+
+  const handleUpdateEntry = () => {
+    if (!newEntry.name || !newEntry.energy || !newEntry.protein || !editingEntry) return;
+
+    let calories = parseFloat(newEntry.energy);
+    if (newEntry.energyUnit === 'kj') {
+      calories = calories / 4.184;
+    }
+
+    const updatedEntry = {
+      ...editingEntry,
+      name: newEntry.name,
+      calories: Math.round(calories),
+      protein: parseFloat(newEntry.protein),
+    };
+
+    const key = dateKey(currentDate);
+    const updatedEntries = currentEntries.map(entry => 
+      entry.id === editingEntry.id ? updatedEntry : entry
+    );
+    const updatedAllEntries = {
+      ...allEntries,
+      [key]: updatedEntries,
+    };
+    
+    setAllEntries(updatedAllEntries);
+    saveAllEntries(updatedAllEntries);
+
+    // Update previous meals
+    const mealTemplate = {
+      name: newEntry.name,
+      calories: Math.round(calories),
+      protein: parseFloat(newEntry.protein),
+    };
+    
+    const existingIndex = previousMeals.findIndex(m => m.name.toLowerCase() === mealTemplate.name.toLowerCase());
+    let updatedPreviousMeals;
+    
+    if (existingIndex >= 0) {
+      updatedPreviousMeals = [...previousMeals];
+      updatedPreviousMeals[existingIndex] = mealTemplate;
+    } else {
+      updatedPreviousMeals = [...previousMeals, mealTemplate];
+    }
+    
+    setPreviousMeals(updatedPreviousMeals);
+    localStorage.setItem('previousMeals', JSON.stringify(updatedPreviousMeals));
+
+    setNewEntry({ name: '', energy: '', energyUnit: 'cal', protein: '' });
+    setSearchTerm('');
+    setEditingEntry(null);
+    setShowAddModal(false);
   };
 
   const handleSaveSettings = () => {
@@ -262,21 +342,60 @@ export default function CalorieTracker() {
     const caloriesOffset = outerCircumference - (caloriesPercentage / 100) * outerCircumference;
     const proteinOffset = innerCircumference - (proteinPercentage / 100) * innerCircumference;
     
+    // Traffic light system for calories
+    const getCaloriesColor = () => {
+      if (caloriesCurrent > caloriesGoal) return '#EF4444'; // Red - over goal
+      if (caloriesPercentage >= 80) return 'url(#caloriesGreenGradient)'; // Green - good progress
+      if (caloriesPercentage >= 50) return 'url(#caloriesYellowGradient)'; // Yellow - moderate
+      return 'url(#caloriesRedGradient)'; // Red - significantly under
+    };
+    
+    // Traffic light system for protein (being over is good)
+    const getProteinColor = () => {
+      if (proteinPercentage >= 80) return 'url(#proteinGreenGradient)'; // Green - good/over is good
+      if (proteinPercentage >= 50) return 'url(#proteinYellowGradient)'; // Yellow - moderate
+      return 'url(#proteinRedGradient)'; // Red - significantly under
+    };
+    
     const isCaloriesOver = caloriesCurrent > caloriesGoal;
-    const isProteinOver = proteinCurrent > proteinGoal;
+    const caloriesTextColor = isCaloriesOver ? 'text-red-400' : 
+                              caloriesPercentage >= 80 ? 'text-green-400' : 
+                              caloriesPercentage >= 50 ? 'text-yellow-400' : 'text-red-400';
+    
+    const proteinTextColor = proteinPercentage >= 80 ? 'text-green-400' : 
+                            proteinPercentage >= 50 ? 'text-yellow-400' : 'text-red-400';
 
     return (
       <div className="flex flex-col items-center">
         <div className="relative" style={{ width: size, height: size }}>
           <svg width={size} height={size} className="transform -rotate-90">
             <defs>
-              <linearGradient id="caloriesGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#60A5FA', stopOpacity: 1 }} />
-                <stop offset="100%" style={{ stopColor: '#A78BFA', stopOpacity: 1 }} />
-              </linearGradient>
-              <linearGradient id="proteinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              {/* Calories gradients */}
+              <linearGradient id="caloriesGreenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" style={{ stopColor: '#34D399', stopOpacity: 1 }} />
                 <stop offset="100%" style={{ stopColor: '#10B981', stopOpacity: 1 }} />
+              </linearGradient>
+              <linearGradient id="caloriesYellowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#FBBF24', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#F59E0B', stopOpacity: 1 }} />
+              </linearGradient>
+              <linearGradient id="caloriesRedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#F87171', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#EF4444', stopOpacity: 1 }} />
+              </linearGradient>
+              
+              {/* Protein gradients */}
+              <linearGradient id="proteinGreenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#34D399', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#10B981', stopOpacity: 1 }} />
+              </linearGradient>
+              <linearGradient id="proteinYellowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#FBBF24', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#F59E0B', stopOpacity: 1 }} />
+              </linearGradient>
+              <linearGradient id="proteinRedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#F87171', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#EF4444', stopOpacity: 1 }} />
               </linearGradient>
             </defs>
             
@@ -296,7 +415,7 @@ export default function CalorieTracker() {
               cy={size / 2}
               r={outerRadius}
               fill="none"
-              stroke={isCaloriesOver ? '#EF4444' : 'url(#caloriesGradient)'}
+              stroke={getCaloriesColor()}
               strokeWidth={strokeWidth}
               strokeLinecap="round"
               strokeDasharray={outerCircumference}
@@ -321,7 +440,7 @@ export default function CalorieTracker() {
               cy={size / 2}
               r={innerRadius}
               fill="none"
-              stroke={isProteinOver ? '#EF4444' : 'url(#proteinGradient)'}
+              stroke={getProteinColor()}
               strokeWidth={strokeWidth}
               strokeLinecap="round"
               strokeDasharray={innerCircumference}
@@ -335,8 +454,12 @@ export default function CalorieTracker() {
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div className="text-center mb-2">
               <div className="flex items-center gap-2 justify-center">
-                <span className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-purple-400"></span>
-                <span className={`text-2xl font-bold ${isCaloriesOver ? 'text-red-400' : darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                <span className={`w-3 h-3 rounded-full ${
+                  isCaloriesOver ? 'bg-red-400' : 
+                  caloriesPercentage >= 80 ? 'bg-green-400' : 
+                  caloriesPercentage >= 50 ? 'bg-yellow-400' : 'bg-red-400'
+                }`}></span>
+                <span className={`text-2xl font-bold ${caloriesTextColor} ${darkMode ? '' : 'mix-blend-normal'}`}>
                   {convertEnergy(caloriesCurrent)}
                 </span>
               </div>
@@ -347,8 +470,11 @@ export default function CalorieTracker() {
             
             <div className="text-center">
               <div className="flex items-center gap-2 justify-center">
-                <span className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-400"></span>
-                <span className={`text-2xl font-bold ${isProteinOver ? 'text-red-400' : darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                <span className={`w-3 h-3 rounded-full ${
+                  proteinPercentage >= 80 ? 'bg-green-400' : 
+                  proteinPercentage >= 50 ? 'bg-yellow-400' : 'bg-red-400'
+                }`}></span>
+                <span className={`text-2xl font-bold ${proteinTextColor} ${darkMode ? '' : 'mix-blend-normal'}`}>
                   {Math.round(proteinCurrent)}
                 </span>
               </div>
@@ -465,12 +591,20 @@ export default function CalorieTracker() {
                       </span>
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleDeleteEntry(entry.id)}
-                    className={`p-2 ${darkMode ? 'hover:bg-red-900/30' : 'hover:bg-red-100'} rounded-xl transition-all duration-200 hover:scale-110 active:scale-95`}
-                  >
-                    <Trash2 size={18} className="text-red-400" />
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditEntry(entry)}
+                      className={`p-2 ${darkMode ? 'hover:bg-blue-900/30' : 'hover:bg-blue-100'} rounded-xl transition-all duration-200 hover:scale-110 active:scale-95`}
+                    >
+                      <Edit2 size={18} className="text-blue-400" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEntry(entry)}
+                      className={`p-2 ${darkMode ? 'hover:bg-red-900/30' : 'hover:bg-red-100'} rounded-xl transition-all duration-200 hover:scale-110 active:scale-95`}
+                    >
+                      <Trash2 size={18} className="text-red-400" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -480,7 +614,7 @@ export default function CalorieTracker() {
         {currentEntries.length === 0 && (
           <div className={`${darkMode ? 'bg-gray-800/40 border-gray-700/50' : 'bg-white/70 border-gray-200/50'} backdrop-blur-lg rounded-3xl shadow-xl p-12 mb-24 text-center border`}>
             <div className="opacity-20 mb-4">
-              <div className="text-8xl">🍽️</div>
+              <div className="text-8xl">ðŸ½ï¸</div>
             </div>
             <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-lg font-medium`}>No meals logged {isToday ? 'yet' : 'for this day'}</p>
           </div>
@@ -504,12 +638,14 @@ export default function CalorieTracker() {
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  Add Food
+                  {editingEntry ? 'Edit Food' : 'Add Food'}
                 </h2>
                 <button
                   onClick={() => {
                     setShowAddModal(false);
                     setSearchTerm('');
+                    setEditingEntry(null);
+                    setNewEntry({ name: '', energy: '', energyUnit: 'cal', protein: '' });
                   }}
                   className={`p-2 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-full transition-all duration-200 hover:rotate-90`}
                 >
@@ -517,8 +653,8 @@ export default function CalorieTracker() {
                 </button>
               </div>
 
-              {/* Previous Meals Search */}
-              {previousMeals.length > 0 && (
+              {/* Previous Meals Search - only show when not editing */}
+              {!editingEntry && previousMeals.length > 0 && (
                 <div className="mb-6 pb-6 border-b-2 border-gray-600/30">
                   <label className={`block text-sm font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     QUICK ADD FROM HISTORY
@@ -544,7 +680,7 @@ export default function CalorieTracker() {
                         >
                           <p className={`font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{meal.name}</p>
                           <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            {meal.calories} kcal • {meal.protein}g protein
+                            {meal.calories} kcal â€¢ {meal.protein}g protein
                           </p>
                         </button>
                       ))}
@@ -554,7 +690,7 @@ export default function CalorieTracker() {
               )}
 
               <h3 className={`text-sm font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-4 tracking-wide`}>
-                ADD NEW MEAL
+                {editingEntry ? 'EDIT MEAL' : 'ADD NEW MEAL'}
               </h3>
 
               <div className="space-y-4">
@@ -640,11 +776,11 @@ export default function CalorieTracker() {
                 </div>
 
                 <button
-                  onClick={handleAddEntry}
+                  onClick={editingEntry ? handleUpdateEntry : handleAddEntry}
                   disabled={!newEntry.name || !newEntry.energy || !newEntry.protein}
                   className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
                 >
-                  Add Entry
+                  {editingEntry ? 'Update Entry' : 'Add Entry'}
                 </button>
               </div>
             </div>
@@ -870,6 +1006,50 @@ export default function CalorieTracker() {
                   </div>
                 ))}
               </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirm && (
+          <div 
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn"
+          >
+            <div 
+              className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-3xl p-6 w-full max-w-sm shadow-2xl border animate-scaleIn`}
+            >
+              <div className="text-center mb-6">
+                <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4">
+                  <Trash2 size={32} className="text-red-500" />
+                </div>
+                <h2 className={`text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'} mb-2`}>
+                  Delete Entry?
+                </h2>
+                <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-2`}>
+                  Are you sure you want to delete this meal?
+                </p>
+                <div className={`${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-3 mt-4`}>
+                  <p className={`font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{deleteConfirm.name}</p>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+                    {convertEnergy(deleteConfirm.calories)} {getEnergyLabel()} • {deleteConfirm.protein}g protein
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  className={`flex-1 ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'} font-bold py-3 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteEntry}
+                  className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-3 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>
