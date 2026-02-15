@@ -614,7 +614,7 @@ export default function CalorieTracker() {
         {currentEntries.length === 0 && (
           <div className={`${darkMode ? 'bg-gray-800/40 border-gray-700/50' : 'bg-white/70 border-gray-200/50'} backdrop-blur-lg rounded-3xl shadow-xl p-12 mb-24 text-center border`}>
             <div className="opacity-20 mb-4">
-              <div className="text-8xl">ðŸ½ï¸</div>
+              <div className="text-8xl">🍽️</div>
             </div>
             <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-lg font-medium`}>No meals logged {isToday ? 'yet' : 'for this day'}</p>
           </div>
