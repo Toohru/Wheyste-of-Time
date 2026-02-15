@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Settings, X, Trash2, ChevronLeft, ChevronRight, Calendar, Sun, Moon, Search, Edit2 } from 'lucide-react';
 
 export default function CalorieTracker() {
-  // Always initialize to today's date (normalized to midnight)
+  // Always initialize to today's date
   const getTodayDate = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today;
+    return new Date();
   };
   
   const [currentDate, setCurrentDate] = useState(getTodayDate());
@@ -27,7 +25,10 @@ export default function CalorieTracker() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const dateKey = (date) => {
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const formatDate = (date) => {
