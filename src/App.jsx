@@ -13,6 +13,7 @@ export default function CalorieTracker() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
+  const [showMonthly, setShowMonthly] = useState(false);
   const [newEntry, setNewEntry] = useState({ name: '', energy: '', energyUnit: 'cal', protein: '' });
   const [tempGoals, setTempGoals] = useState({ calories: 2000, protein: 150 });
   const [darkMode, setDarkMode] = useState(true);
@@ -122,8 +123,41 @@ export default function CalorieTracker() {
     return weekData;
   };
 
+  // Get last 30 days of data for monthly view
+  const getMonthlyData = () => {
+    const monthData = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const key = dateKey(date);
+      const dayEntries = allEntries[key] || [];
+      const dayTotals = dayEntries.reduce(
+        (acc, entry) => ({
+          calories: acc.calories + entry.calories,
+          protein: acc.protein + entry.protein,
+        }),
+        { calories: 0, protein: 0 }
+      );
+      monthData.push({
+        date,
+        key,
+        ...dayTotals,
+      });
+    }
+    return monthData;
+  };
+
   const weeklyData = getWeeklyData();
   const weeklyTotals = weeklyData.reduce(
+    (acc, day) => ({
+      calories: acc.calories + day.calories,
+      protein: acc.protein + day.protein,
+    }),
+    { calories: 0, protein: 0 }
+  );
+
+  const monthlyData = getMonthlyData();
+  const monthlyTotals = monthlyData.reduce(
     (acc, day) => ({
       calories: acc.calories + day.calories,
       protein: acc.protein + day.protein,
@@ -539,6 +573,13 @@ export default function CalorieTracker() {
           >
             <Calendar size={18} />
             Weekly
+          </button>
+          <button
+            onClick={() => setShowMonthly(true)}
+            className={`flex-1 ${darkMode ? 'bg-gray-800/60 hover:bg-gray-700/60 text-gray-200 border-gray-700/50' : 'bg-white/80 hover:bg-white text-gray-700 border-gray-200/50'} backdrop-blur-sm py-2.5 px-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-sm border`}
+          >
+            <Calendar size={18} />
+            Monthly
           </button>
           <button
             onClick={() => {
@@ -962,6 +1003,113 @@ export default function CalorieTracker() {
                     }}
                     style={{
                       animation: `slideIn 0.4s ease-out ${index * 0.1}s backwards`
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className={`font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                          {formatDate(day.date)}
+                        </p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-600'} mt-0.5`}>
+                          {day.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          <span className="font-bold text-blue-400">{convertEnergy(day.calories)}</span> {getEnergyLabel()}
+                        </p>
+                        <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          <span className="font-bold text-green-400">{Math.round(day.protein)}</span>g protein
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className={`flex-1 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-2.5 overflow-hidden`}>
+                        <div
+                          className={`h-2.5 rounded-full transition-all duration-700 ${
+                            day.calories > goals.calories 
+                              ? 'bg-gradient-to-r from-red-400 to-red-600' 
+                              : 'bg-gradient-to-r from-blue-400 to-purple-500'
+                          }`}
+                          style={{ width: `${Math.min((day.calories / goals.calories) * 100, 100)}%` }}
+                        />
+                      </div>
+                      <div className={`flex-1 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-2.5 overflow-hidden`}>
+                        <div
+                          className={`h-2.5 rounded-full transition-all duration-700 ${
+                            day.protein > goals.protein 
+                              ? 'bg-gradient-to-r from-red-400 to-red-600' 
+                              : 'bg-gradient-to-r from-green-400 to-emerald-500'
+                          }`}
+                          style={{ width: `${Math.min((day.protein / goals.protein) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Monthly View Modal */}
+        {showMonthly && (
+          <div 
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn"
+          >
+            <div 
+              className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-3xl w-full max-w-md my-8 shadow-2xl border animate-scaleIn max-h-[90vh] flex flex-col`}
+            >
+              {/* Sticky Header */}
+              <div className={`flex justify-between items-center p-6 pb-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-t-3xl sticky top-0 z-10`}>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  Last 30 Days
+                </h2>
+                <button
+                  onClick={() => setShowMonthly(false)}
+                  className={`p-2 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-full transition-all duration-200 hover:rotate-90`}
+                >
+                  <X size={24} className={darkMode ? 'text-gray-300' : 'text-gray-700'} />
+                </button>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="overflow-y-auto px-6 pb-6">
+
+              {/* Monthly Totals */}
+              <div className={`${darkMode ? 'bg-gray-700/40 border-gray-600/50' : 'bg-blue-50 border-blue-100'} rounded-2xl p-5 mb-6 shadow-md border`}>
+                <h3 className={`font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'} mb-4 tracking-wide`}>MONTHLY TOTALS</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className={`${darkMode ? 'bg-gray-800/50 border-gray-600/30' : 'bg-white/70 border-blue-200/30'} rounded-xl p-3 border`}>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} font-semibold mb-1`}>ENERGY</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                      {convertEnergy(monthlyTotals.calories)}
+                    </p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-600'} mt-1`}>Avg: {convertEnergy(monthlyTotals.calories / 30)}/{getEnergyLabel()} day</p>
+                  </div>
+                  <div className={`${darkMode ? 'bg-gray-800/50 border-gray-600/30' : 'bg-white/70 border-blue-200/30'} rounded-xl p-3 border`}>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} font-semibold mb-1`}>PROTEIN (G)</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                      {Math.round(monthlyTotals.protein)}
+                    </p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-600'} mt-1`}>Avg: {Math.round(monthlyTotals.protein / 30)}/day</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Daily Breakdown */}
+              <div className="space-y-3">
+                {monthlyData.map((day, index) => (
+                  <div
+                    key={day.key}
+                    className={`border-2 ${darkMode ? 'border-gray-700/50 hover:border-blue-500/50 bg-gray-700/20' : 'border-gray-200/50 hover:border-blue-400/50 bg-gray-50/50'} rounded-2xl p-4 hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:scale-102`}
+                    onClick={() => {
+                      setCurrentDate(day.date);
+                      setShowMonthly(false);
+                    }}
+                    style={{
+                      animation: `slideIn 0.4s ease-out ${Math.min(index * 0.05, 1)}s backwards`
                     }}
                   >
                     <div className="flex justify-between items-start mb-3">
